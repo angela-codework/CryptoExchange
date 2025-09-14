@@ -1,6 +1,7 @@
 package com.demo.feature_market.core.di
 
 import com.demo.feature_market.data.remote.api.MarketApi
+import com.demo.feature_market.data.remote.api.WebSocketClient
 import com.demo.feature_market.data.repository.MarketRepositoryImpl
 import com.demo.feature_market.domain.repository.MarketRepository
 import dagger.Module
@@ -14,6 +15,6 @@ import javax.inject.Singleton
 object RepoModule {
     @Provides
     @Singleton
-    fun provideMarketRepository(marketApi: MarketApi): MarketRepository =
-        MarketRepositoryImpl(marketApi)
+    fun provideMarketRepository(marketApi: MarketApi, webSocketClient: WebSocketClient): MarketRepository =
+        MarketRepositoryImpl(marketApi, webSocketClient)
 }

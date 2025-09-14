@@ -1,29 +1,27 @@
-package com.demo.feature_market.data.remote.api
+package com.demo.feature_market.data.remote.dto
 
-import com.demo.feature_market.data.remote.dto.MarketDto
-import com.demo.feature_market.data.remote.dto.toMarket
 import com.demo.feature_market.domain.model.Market
 import com.google.gson.annotations.SerializedName
 
-data class MarketResponse(
+data class MarketResponseDto(
     @SerializedName("msg") val msg: String,
     @SerializedName("time") val serverTime: Long,
     @SerializedName("data") val marketList: List<MarketDto>
 )
 
-data class MarketsDtoWithTime(
+data class MarketsWithTimeDto(
     val data: List<MarketDto>,
     val serverTime: Long
 )
 
-fun MarketResponse.toMarketsDtoWithTime() : MarketsDtoWithTime {
-    return MarketsDtoWithTime(
+fun MarketResponseDto.toMarketsWithTimeDto() : MarketsWithTimeDto {
+    return MarketsWithTimeDto(
         data = marketList,
         serverTime = serverTime
     )
 }
 
-fun MarketsDtoWithTime.toMarkets(): List<Market> {
+fun MarketsWithTimeDto.toMarkets(): List<Market> {
     return data.map { it.toMarket() }
 }
 
