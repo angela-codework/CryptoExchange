@@ -20,8 +20,6 @@
 package com.demo.feature_market.data.repository
 
 import com.demo.core.common.Resource
-import com.demo.core.util.logger.AppLogger
-import com.demo.core.util.logger.AppLogger.tag
 import com.demo.feature_market.data.remote.api.MarketApi
 import com.demo.feature_market.data.remote.api.WebSocketClient
 import com.demo.feature_market.data.remote.dto.MarketsWithTimeDto
@@ -30,6 +28,8 @@ import com.demo.feature_market.data.remote.dto.toMarketsWithTimeDto
 import com.demo.feature_market.domain.model.Market
 import com.demo.feature_market.domain.model.MarketType
 import com.demo.feature_market.domain.repository.MarketRepository
+import com.demo.logger.AppLogger
+import com.demo.logger.AppLogger.tag
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

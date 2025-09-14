@@ -37,7 +37,6 @@ package com.demo.feature_market.presentation.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.demo.core.common.Resource
-import com.demo.core.util.logger.AppLogger.tag
 import com.demo.feature_market.data.remote.api.WebSocketClient
 import com.demo.feature_market.domain.model.Market
 import com.demo.feature_market.domain.model.MarketType
@@ -47,6 +46,7 @@ import com.demo.feature_market.domain.usecase.GetMarketsByTypeUseCase
 import com.demo.feature_market.domain.usecase.GetMarketsWithPriceByTypeUseCase
 import com.demo.feature_market.domain.usecase.GetWebSocketConnectStateUseCase
 import com.demo.feature_market.domain.usecase.OpenWebSocketUseCase
+import com.demo.logger.AppLogger.tag
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

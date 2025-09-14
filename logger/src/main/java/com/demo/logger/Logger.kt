@@ -1,4 +1,4 @@
-package com.demo.core.util.logger
+package com.demo.logger
 
 interface Logger {
     fun d(tag: String, message: String)

@@ -26,3 +26,4 @@ project(":feature:feature_market").projectDir = file("feature/feature_market")
 
 include(":core")
 include(":shared")
+include(":logger")

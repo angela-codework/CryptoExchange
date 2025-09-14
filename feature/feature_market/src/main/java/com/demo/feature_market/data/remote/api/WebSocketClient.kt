@@ -2,12 +2,12 @@ package com.demo.feature_market.data.remote.api
 
 import com.demo.core.di.Qualifiers
 import com.demo.core.util.fromJsonOrNull
-import com.demo.core.util.logger.AppLogger
-import com.demo.core.util.logger.AppLogger.tag
 import com.demo.core.util.toJsonOrNull
 import com.demo.feature_market.core.common.Constants.BASE_WS_URL
 import com.demo.feature_market.data.remote.dto.WebSocketResponseDto
 import com.demo.feature_market.data.remote.dto.WebSocketSubscriptDto
+import com.demo.logger.AppLogger
+import com.demo.logger.AppLogger.tag
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
