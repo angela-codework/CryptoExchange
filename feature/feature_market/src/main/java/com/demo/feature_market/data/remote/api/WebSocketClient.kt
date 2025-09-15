@@ -57,7 +57,7 @@ class WebSocketClient @Inject constructor(
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
-    private val _connectionState: MutableStateFlow<ConnectionState> = MutableStateFlow(ConnectionState.CONNECTING)
+    private val _connectionState: MutableStateFlow<ConnectionState> = MutableStateFlow(ConnectionState.DISCONNECTED)
     val connectionState: StateFlow<ConnectionState> = _connectionState
 
     val responseUpdate: SharedFlow<WebSocketResponseDto> = _responseUpdate
@@ -122,7 +122,12 @@ class WebSocketClient @Inject constructor(
     }
 
     fun connect() {
-        AppLogger.d(TAG, "Do connect WebSocket")
+        AppLogger.d(TAG, "Do connect WebSocket: current connect state(${_connectionState.value})")
+        if (_connectionState.value == ConnectionState.CONNECTED || _connectionState.value == ConnectionState.CONNECTING) {
+            AppLogger.d("WebSocket", "Connect call ignored, already connected or connecting.")
+            return
+        }
+
         retryCount = 0
         connectInternal()
     }

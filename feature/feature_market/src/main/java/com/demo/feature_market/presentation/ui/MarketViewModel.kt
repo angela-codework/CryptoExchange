@@ -13,7 +13,7 @@
  *     is the single source of truth for the UI and contains all necessary information, including
  *     loading status, error messages, and the list of markets.
  *
- * 3.  **Handling User Actions:** It provides public methods like `onMarketTypeSelected` and `onRetry`
+ * 3.  **Handling User Actions:** It provides public methods like `onSelectMarketTypeChange` and `onRetry`
  *     that the UI can call to signal user intent.
  *
  * ## Core Design:
@@ -30,7 +30,7 @@
  * is handled reactively and robustly within the ViewModel.
  *
  * @see MarketUiState for the definition of the UI state.
- * @see MarketRepository for the underlying data provider.
+ * @see com.demo.feature_market.domain.repository.MarketRepository for the underlying data provider.
  */
 package com.demo.feature_market.presentation.ui
 
@@ -38,28 +38,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.demo.core.common.Resource
 import com.demo.feature_market.data.remote.api.WebSocketClient
-import com.demo.feature_market.domain.model.Market
 import com.demo.feature_market.domain.model.MarketType
 import com.demo.feature_market.domain.model.MarketUiState
 import com.demo.feature_market.domain.usecase.CloseWebSocketUseCase
-import com.demo.feature_market.domain.usecase.GetMarketsUseCase
 import com.demo.feature_market.domain.usecase.GetMarketsWithPriceUseCase
 import com.demo.feature_market.domain.usecase.GetWebSocketConnectStateUseCase
 import com.demo.feature_market.domain.usecase.OpenWebSocketUseCase
+import com.demo.feature_market.domain.usecase.SyncMarketsUseCase
 import com.demo.logger.AppLogger
 import com.demo.logger.AppLogger.tag
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -69,11 +63,11 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class MarketViewModel @Inject constructor(
+    private val syncMarketsUseCase: SyncMarketsUseCase,
     private val getMarketsWithPriceUseCase: GetMarketsWithPriceUseCase,
-    private val openWebSocketUseCase: OpenWebSocketUseCase,
-    private val closeWebSocketUseCase: CloseWebSocketUseCase,
     private val getWebSocketConnectStateUseCase: GetWebSocketConnectStateUseCase,
-    private val getMarketsUseCase: GetMarketsUseCase
+    private val openWebSocketUseCase: OpenWebSocketUseCase,
+    private val closeWebSocketUseCase: CloseWebSocketUseCase
 ) : ViewModel() {
 
     companion object {
@@ -81,96 +75,134 @@ class MarketViewModel @Inject constructor(
         const val OBSERVE_TIMEOUT = 5000L
     }
 
-    // Represents the market type currently selected by the user (ex. SPOT or FUTURES).
+    // --- Private State Holders & Event Triggers ---
+
+    // Main UI state, exposed to the UI. It's private and updated by the central `observeUiState` collector.
+    private val _uiState = MutableStateFlow(MarketUiState(isLoading = true))
+
+    // A dedicated StateFlow to represent the loading status of a one-shot sync operation.
+    private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+    // Represents the market type currently selected by the user (e.g., SPOT or FUTURES).
     private val _selectedType = MutableStateFlow(MarketType.SPOT)
 
-    // An event trigger to manually restart the data fetching process, ex. on user "retry" click.
-    private val _retryTrigger = MutableSharedFlow<Unit>()
+    // A SharedFlow for one-time "fire-and-forget" events, like showing a Toast for a sync failure.
+    private val _errorEvent = MutableSharedFlow<String>()
 
-    // A combined trigger that emits the latest marketType whenever the type changes or a retry is requested.
-    private val actionTrigger = combine(_selectedType, _retryTrigger.onStart { emit(Unit) }) { type, _ -> type }
 
     /**
-     * The single source of truth for the UI.
-     * It is constructed by `createUiStateFlow` and converted into a hot StateFlow,
-     * ensuring it survives configuration changes and is shared among all collectors.
+     * The single source of truth for the UI, observed by the Fragment.
      */
-    val uiState: StateFlow<MarketUiState> = createUiStateFlow()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(OBSERVE_TIMEOUT),
-            initialValue = MarketUiState(isLoading = false)
-        )
+    val uiState: StateFlow<MarketUiState> = _uiState
+
+    /**
+     * The stream of one-time error events for the UI to display as transient messages (e.g., Snackbar).
+     */
+    val errorEvent: SharedFlow<String> = _errorEvent
+    //TODO: error snack bar
+
+
+    // --- Private Data Flows ---
+
+    // A hot flow from the repository that provides a continuous list of all markets with real-time prices.
+    private val allMarketsWithPriceFlow = getMarketsWithPriceUseCase()
+
+    // A hot flow from the repository that provides the current WebSocket connection state.
+    private val connectionStateFlow = getWebSocketConnectStateUseCase()
+
 
     init {
-        openWebSocketUseCase()
+        // When the ViewModel is created, start observing the data sources to build the UI state.
+        observeUiState()
+        // Trigger an initial sync of the market data.
+        syncMarkets()
+    }
+
+    // --- Public Actions (called from the UI) ---
+
+    /**
+     * Called by the UI to retry the entire process, typically after an error.
+     * This will attempt to reconnect the WebSocket and re-sync the market list.
+     */
+    fun onRetry() {
+        AppLogger.d(TAG, "onRetry")
+        openWebSocketUseCase() // Attempt to reconnect WebSocket
+        syncMarkets()          // Attempt to re-sync market data
     }
 
     /**
-     * * Called by the UI when the user selects a different market type tab.
+     * Called by the UI when the user selects a different market type tab.
+     * Updates the filter for the displayed market list.
      */
     fun onSelectMarketTypeChange(type: MarketType) {
+        AppLogger.d(TAG, "onSelectMarketTypeChange to $type")
         _selectedType.value = type
     }
 
     /**
-     * Called by the UI when the user clicks a "retry" button after a failure.
+     * Triggers a one-shot operation to sync the market list from the remote API.
+     * Manages the `isLoading` state and emits an error event on failure.
      */
-    fun onRetry() {
-        _retryTrigger.tryEmit(Unit)
-    }
-
-    /**
-     * Top-level function to create the final UI state by combining various data sources.
-     * Its sole responsibility is to orchestrate the combination of different state flows.
-     */
-    private fun createUiStateFlow() : Flow<MarketUiState> {
-        // 1. Get the flow representing the core business(markets) logic.
-        val marketsUiFlow = createMarketsUiFlow()
-        // 2. Get the flow representing the global WebSocket connection state.
-        val wsConnectionFlow = getWebSocketConnectStateUseCase()
-
-        // 3. Combine them to produce the final, definitive UI state.
-        return combine(marketsUiFlow, wsConnectionFlow) { marketState, weConnectState ->
-            if(weConnectState == WebSocketClient.ConnectionState.DISCONNECTED) {
-                // The DISCONNECTED state has the highest priority.
-                // It overrides any other state to display a connection error to the user.
-                marketState.copy(isLoading = false, error = "Connection is lost. Prices stop updating!")
-            } else {
-                marketState
+    fun syncMarkets() {
+        AppLogger.d(TAG, "syncMarkets")
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = syncMarketsUseCase()
+            if (result is Resource.Fail) {
+                _errorEvent.emit(result.msg)
             }
+            _isLoading.value = false
         }
     }
 
-    /**
-     * Creates the core business logic flow.
-     * This flow acts as a state machine that responds to the actionTrigger (user changing type or retrying).
-     * It describes the entire process: Loading -> Sync -> Success/Failure -> Listening for data.
-     */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun createMarketsUiFlow() : Flow<MarketUiState> {
-        return actionTrigger.flatMapLatest { marketType ->
-            AppLogger.d(TAG, "actionTrigger with type: $marketType ")
-            flow {
-                emit(MarketUiState(isLoading = true))
 
-                when(val result = getMarketsUseCase()) {
-                    is Resource.Success<List<Market>> -> {
-                        getMarketsWithPriceUseCase().collect { markets ->
-                            emit(MarketUiState(marketType = marketType, isLoading = false, markets = markets))
-                        }
-                    }
-                    is Resource.Fail<*> -> {
-                        emit(MarketUiState(marketType = marketType, isLoading = false, error = result.msg))
+    /**
+     * The central reactive pipeline.
+     * This function launches a coroutine that combines all relevant data and state flows
+     * into a single, definitive `MarketUiState` and collects it to update the `_uiState`.
+     */
+    private fun observeUiState() {
+        viewModelScope.launch {
+            combine(
+                allMarketsWithPriceFlow,
+                _selectedType,
+                _isLoading,
+                connectionStateFlow,
+            ) { allMarkets, selectedType, isLoading, connState ->
+
+                // Step 1: Filter the full market list based on the user's selected tab.
+                val filteredMarkets = allMarkets.filter { market ->
+                    when (selectedType) {
+                        MarketType.SPOT -> !market.isFuture
+                        MarketType.FUTURE -> market.isFuture
                     }
                 }
+
+                // Step 2: Determine if there are any persistent errors to display.
+                // Connection errors have the highest priority.
+                val persistentError: String? = when {
+                    connState == WebSocketClient.ConnectionState.DISCONNECTED -> "Real-time price update cannot update."
+                    !isLoading && filteredMarkets.isEmpty() -> "No market data to show"
+                    else -> null
+                }
+
+                // Step 3: Construct the final UI state object.
+                MarketUiState(
+                    marketType = selectedType,
+                    isLoading = isLoading,
+                    markets = filteredMarkets,
+                    error = persistentError
+                )
+            }.collect {
+                // Step 4: Update the single StateFlow that the UI observes.
+                _uiState.value = it
             }
         }
     }
 
     override fun onCleared() {
         super.onCleared()
+        // Clean up resources when the ViewModel is destroyed.
         closeWebSocketUseCase()
     }
-
 }

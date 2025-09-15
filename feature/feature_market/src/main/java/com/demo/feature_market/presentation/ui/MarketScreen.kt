@@ -30,6 +30,7 @@ import com.demo.feature_market.domain.model.MarketUiState
 import com.demo.feature_market.presentation.ui.components.ErrorMessage
 import com.demo.feature_market.presentation.ui.components.MarketItem
 import com.demo.feature_market.presentation.ui.components.MarketTabRow
+import com.google.gson.annotations.Until
 
 @Composable
 fun MarketScreen(
@@ -39,14 +40,16 @@ fun MarketScreen(
 
     MarketScreenContent(
         uiState = uiState,
-        onTypeSelected = { type -> viewModel.onSelectMarketTypeChange(type) }
+        onTypeSelected = { type -> viewModel.onSelectMarketTypeChange(type) },
+        onRetry = { viewModel.onRetry() }
     )
 }
 
 @Composable
 fun MarketScreenContent(
     uiState: MarketUiState,
-    onTypeSelected: (MarketType) -> Unit
+    onTypeSelected: (MarketType) -> Unit,
+    onRetry: () -> Unit
 ) {
     val listState = rememberLazyListState()
 
@@ -77,7 +80,8 @@ fun MarketScreenContent(
                 uiState.error != null -> {
                     ErrorMessage(
                         message = uiState.error,
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.Center),
+                        onRetry = onRetry
                     )
                 }
 
@@ -136,7 +140,8 @@ fun MarketFutureScreenPreview() {
                     )
                 )
             ),
-            onTypeSelected = { }
+            onTypeSelected = { },
+            onRetry = {}
         )
     }
 }
@@ -166,7 +171,8 @@ fun MarketSpotScreenPreview() {
                     )
                 )
             ),
-            onTypeSelected = { }
+            onTypeSelected = { },
+            onRetry = {}
         )
     }
 }
@@ -177,7 +183,8 @@ fun MarketScreenLoadingPreview() {
     CryptoExchangeTheme {
         MarketScreenContent(
             uiState = MarketUiState(isLoading = true),
-            onTypeSelected = { }
+            onTypeSelected = { },
+            onRetry = {}
         )
     }
 }
@@ -191,7 +198,8 @@ fun MarketScreenLoadingDarkPreview() {
     CryptoExchangeTheme {
         MarketScreenContent(
             uiState = MarketUiState(isLoading = true),
-            onTypeSelected = { }
+            onTypeSelected = { },
+            onRetry = {}
         )
     }
 }
@@ -205,7 +213,8 @@ fun MarketScreenErrorPreview() {
                 isLoading = false,
                 error = "網路連接失敗"
             ),
-            onTypeSelected = { }
+            onTypeSelected = { },
+            onRetry = {}
         )
     }
 }
@@ -222,7 +231,8 @@ fun MarketScreenErrorDarkPreview() {
                 isLoading = false,
                 error = "網路連接失敗"
             ),
-            onTypeSelected = { }
+            onTypeSelected = { },
+            onRetry = {}
         )
     }
 }
@@ -252,7 +262,8 @@ fun MarketFutureScreenDarkPreview() {
                     )
                 )
             ),
-            onTypeSelected = { }
+            onTypeSelected = { },
+            onRetry = {}
         )
     }
 }
@@ -282,7 +293,8 @@ fun MarketSpotScreenDarkPreview() {
                     )
                 )
             ),
-            onTypeSelected = { }
+            onTypeSelected = { },
+            onRetry = {}
         )
     }
 }

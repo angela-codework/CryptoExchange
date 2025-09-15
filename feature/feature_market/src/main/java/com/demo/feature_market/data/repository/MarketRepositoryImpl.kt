@@ -36,7 +36,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
 
@@ -194,6 +196,13 @@ class MarketRepositoryImpl(
 
                 marketsWithPrice
             }
+        }.onStart {
+            AppLogger.d(TAG, "First collector started, opening WebSocket.")
+            openWebSocket()
+        }
+        .onCompletion {
+            AppLogger.d(TAG, "Last collector stopped, closing WebSocket.")
+            closeWebSocket()
         }
     }
 }

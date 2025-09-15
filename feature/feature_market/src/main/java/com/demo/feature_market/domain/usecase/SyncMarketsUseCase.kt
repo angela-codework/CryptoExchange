@@ -7,7 +7,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class GetMarketsUseCase @Inject constructor(
+class SyncMarketsUseCase @Inject constructor(
     private val marketRepository: MarketRepository
 ) {
     suspend operator fun invoke() : Resource<List<Market>> {
