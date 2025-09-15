@@ -52,16 +52,20 @@ dependencies {
 
     implementation(project(":feature:feature_market"))
     implementation(project(":core"))
+    implementation(project(":logger"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.material3)
+    implementation(libs.navigation.compose)
+    implementation(libs.androidx.compose.ui.tooling.preview)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
     implementation(libs.hilt.android)
+    debugImplementation(libs.androidx.compose.ui.tooling)
     kapt(libs.hilt.android.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 

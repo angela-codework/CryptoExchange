@@ -5,12 +5,12 @@ import com.google.gson.annotations.SerializedName
 
 data class MarketDto(
     @SerializedName("symbol") val symbol: String,
-    @SerializedName("future")  val future: String
+    @SerializedName("future")  val isFuture: Boolean
 )
 
 fun MarketDto.toMarket() : Market {
     return Market(
         symbol = symbol,
-        future = future
+        isFuture = isFuture
     )
 }

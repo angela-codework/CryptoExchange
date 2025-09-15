@@ -1,6 +1,6 @@
 package com.demo.core.util
 
-import com.demo.core.util.logger.AppLogger
+import com.demo.logger.AppLogger
 import com.google.gson.Gson
 
 inline fun <reified T> String?.fromJsonOrNull(gson: Gson): T? {

@@ -1,10 +1,11 @@
-package com.demo.feature_market.presentation.theme
+package com.demo.core.common.ui.components
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.demo.core.common.ui.components.Typography
 
 val Typography = Typography(
     bodyLarge = TextStyle(

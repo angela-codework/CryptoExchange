@@ -1,4 +1,4 @@
-package com.demo.feature_market.presentation.theme
+package com.demo.core.common.ui.components
 
 import androidx.compose.ui.graphics.Color
 
