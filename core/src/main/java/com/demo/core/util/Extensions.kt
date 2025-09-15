@@ -8,7 +8,7 @@ inline fun <reified T> String?.fromJsonOrNull(gson: Gson): T? {
     return try {
         gson.fromJson(this, T::class.java)
     } catch (e: Exception) {
-        AppLogger.w(message = "fromJsonOrNull failed: ${e.message}")
+        AppLogger.w(message = "${T::class.simpleName} fromJsonOrNull failed: ${e.message}")
         null
     }
 }
@@ -18,7 +18,7 @@ fun Any?.toJsonOrNull(gson: Gson): String? {
     return try {
         gson.toJson(this)
     } catch (e: Exception) {
-        AppLogger.w(message = "toJsonOrNull failed: ${e.message}")
+        AppLogger.w(message = "${Any::class.simpleName} toJsonOrNull failed: ${e.message}")
         null
     }
 }

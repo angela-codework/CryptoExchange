@@ -62,15 +62,11 @@ class MarketRepositoryImpl(
         const val PRICE_TYPE_FILTER = 1
     }
 
-    private val lastFetchServerTime = ConcurrentHashMap<MarketType, Long>().apply {
-        put(MarketType.SPOT, 0L)
-        put(MarketType.FUTURE, 0L)
-    }
+    private var lastFetchServerTime = 0L
 
-    private var cachedMarketMap = ConcurrentHashMap<MarketType, List<Market>>()
+    private var cachedMarket: List<Market> = emptyList()
 
-    private val _marketSpotStateFlow = MutableStateFlow<List<Market>>(emptyList())
-    private val _marketFutureStateFlow = MutableStateFlow<List<Market>>(emptyList())
+    private val _marketsStateFlow = MutableStateFlow<List<Market>>(emptyList())
 
     override fun getWsRealTimeConnectionState(): StateFlow<WebSocketClient.ConnectionState> {
         return webSocket.connectionState
@@ -86,12 +82,12 @@ class MarketRepositoryImpl(
         webSocket.disconnect()
     }
 
-    // get valid market list cache by MarketType
-    private fun getValidMarketListFromCache(type: MarketType) : List<Market>? {
+    // get valid market list cache
+    private fun getValidMarketListFromCache() : List<Market>? {
         val currentTime = System.currentTimeMillis()
 
-        return cachedMarketMap[type]?.let { cache ->
-            val isExpired = currentTime - (lastFetchServerTime[type]?: 0L) > CACHE_TIME
+        return cachedMarket.let { cache ->
+            val isExpired = currentTime - lastFetchServerTime > CACHE_TIME
             if(isExpired) {
                 null
             } else {
@@ -100,25 +96,17 @@ class MarketRepositoryImpl(
         }
     }
 
-    // save market list to cache and update last fetch server time by MarketType
-    private fun saveToCache(type: MarketType, markets: List<Market>, dataTime: Long) {
-        AppLogger.d(TAG, "saveToCache: [type $type, market size ${markets.size}, server time $dataTime]")
-        cachedMarketMap[type] = markets
-        lastFetchServerTime[type] = dataTime
+    // save market list to cache and update last fetch server time
+    private fun saveToCache(markets: List<Market>, dataTime: Long) {
+        AppLogger.d(TAG, "saveToCache: [market size ${markets.size}, server time $dataTime]")
+        cachedMarket = markets
+        lastFetchServerTime = dataTime
     }
 
-    override suspend fun getSpotMarkets() : Resource<List<Market>> {
-        return getMarketsByType(MarketType.SPOT)
-    }
-
-    override suspend fun getFutureMarkets() : Resource<List<Market>> {
-        return getMarketsByType(MarketType.FUTURE)
-    }
-
-    // Get markets by cache or api wrap in Resource by MarketType
-    private suspend fun getMarketsByType(type: MarketType) : Resource<List<Market>> {
-        AppLogger.d(TAG, "getMarketList of type $type")
-        val cache = getValidMarketListFromCache(type)
+    // Get markets by cache or api wrap in Resource
+    override suspend fun getMarkets() : Resource<List<Market>> {
+        AppLogger.d(TAG, "getMarketList")
+        val cache = getValidMarketListFromCache()
         if(!cache.isNullOrEmpty()) {
             AppLogger.d(TAG, "Use cached market list.")
             return Resource.Success(cache)
@@ -127,40 +115,41 @@ class MarketRepositoryImpl(
         AppLogger.d(TAG, "cache is expired or null. Fetch from server.")
 
 
-        return when(val result = getMarketResponseByType(type)) {
+        return when(val result = getMarketResponse()) {
             is Resource.Fail<MarketsWithTimeDto> -> {
-                getMarketStateFlowFromType(type).value = emptyList()
+                _marketsStateFlow.value = emptyList()
                 Resource.Fail(result.msg)
             }
             is Resource.Success<MarketsWithTimeDto> -> {
                 val markets = result.data.toMarkets()
                 val serverTime = result.data.serverTime
-                saveToCache(type, markets, serverTime)
-                getMarketStateFlowFromType(type).value = markets
+                AppLogger.d(TAG, "getMarketResponseByType success: ${markets.joinToString("\n") }}")
+                saveToCache(markets, serverTime)
+                _marketsStateFlow.value = markets
 
                 Resource.Success(markets)
             }
         }
     }
 
-    // Fetch MarketsDto and server time wrap in Resource by MarketType
-    private suspend fun getMarketResponseByType(type: MarketType) : Resource<MarketsWithTimeDto> =
+    // Fetch MarketsDto and server time wrap in Resource
+    private suspend fun getMarketResponse() : Resource<MarketsWithTimeDto> =
         withContext(Dispatchers.IO) {
             try {
-                val result = marketApi.getSpotFromMarkets(type == MarketType.FUTURE)
+                val result = marketApi.getMarkets()
 
                 if(result.isSuccessful) {
                     val response = result.body()
                     if(response != null) {
                         Resource.Success(response.toMarketsWithTimeDto())
                     } else {
-                        Resource.Fail("Failed to fetch market list with type ${type.name} : body is null")
+                        Resource.Fail("Failed to fetch market list : body is null")
                     }
                 } else {
-                    Resource.Fail("Failed to fetch market list with type ${type.name} : ${result.message()}")
+                    Resource.Fail("Failed to fetch market list : ${result.message()}")
                 }
             } catch (e: Exception) {
-                Resource.Fail("Failed to fetch market list with type ${type.name} : ${e.message}")
+                Resource.Fail("Failed to fetch market list : ${e.message}")
             }
         }
 
@@ -172,9 +161,17 @@ class MarketRepositoryImpl(
             }
             .map { wsResponse ->
                 try {
-                    wsResponse.data
-                        .filter { it.type == PRICE_TYPE_FILTER }
-                        .associate { it.symbol to it.price }
+                    // wsResponse.data is now a Map, e.g., Map<String, WsData>
+                    wsResponse.data.values
+                        .filter { coinData ->
+                            // Filter the map entries. The value of the entry contains the type.
+                            // entry.key is the symbol, entry.value is the object with price/type
+                            coinData.type == PRICE_TYPE_FILTER
+                        }
+                        .associate { coinData ->
+                            // 3. Create a new map. For each object, use its 'id' as the new key and its 'price' as the new value.
+                            coinData.id to coinData.price
+                        }
                 } catch (e: Exception) {
                     AppLogger.w(TAG, "WebSocket mapping failed: ${e.message}")
                     emptyMap()
@@ -182,19 +179,11 @@ class MarketRepositoryImpl(
             }
     }
 
-    override fun getSpotMarketsWithRealTimePrice() : Flow<List<Market>> {
-        return getMarketsWithRealTimePriceByType(MarketType.SPOT)
-    }
-
-    override fun getFutureMarketsWithRealTimePrice() : Flow<List<Market>> {
-        return getMarketsWithRealTimePriceByType(MarketType.FUTURE)
-    }
-
     // get updated market list with real-time price
-    private fun getMarketsWithRealTimePriceByType(type: MarketType) : Flow<List<Market>> {
-        return combine(getMarketStateFlowFromType(type), getRealTimePriceMap()) { markets, priceMap ->
+    override fun getMarketsWithRealTimePrice() : Flow<List<Market>> {
+        return combine(_marketsStateFlow, getRealTimePriceMap()) { markets, priceMap ->
             if (markets.isEmpty()) {
-                AppLogger.d(TAG, "market list of type ${type.name} is empty.")
+                AppLogger.d(TAG, "market list is empty.")
                 emptyList()
             } else {
                 val marketsWithPrice = markets.map {  market ->
@@ -205,13 +194,6 @@ class MarketRepositoryImpl(
 
                 marketsWithPrice
             }
-        }
-    }
-
-    private fun getMarketStateFlowFromType(type: MarketType) : MutableStateFlow<List<Market>> {
-        return when(type) {
-            MarketType.SPOT -> _marketSpotStateFlow
-            MarketType.FUTURE -> _marketFutureStateFlow
         }
     }
 }

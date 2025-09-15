@@ -7,11 +7,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 interface MarketRepository {
-    suspend fun getSpotMarkets() : Resource<List<Market>>
-    suspend fun getFutureMarkets() : Resource<List<Market>>
-
-    fun getSpotMarketsWithRealTimePrice() : Flow<List<Market>>
-    fun getFutureMarketsWithRealTimePrice() : Flow<List<Market>>
+    suspend fun getMarkets() : Resource<List<Market>>
+    fun getMarketsWithRealTimePrice() : Flow<List<Market>>
     fun getRealTimePriceMap(): Flow<Map<String, Double>>
 
     fun getWsRealTimeConnectionState(): StateFlow<WebSocketClient.ConnectionState>

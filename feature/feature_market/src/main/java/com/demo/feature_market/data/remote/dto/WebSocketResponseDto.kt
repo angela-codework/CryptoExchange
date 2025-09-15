@@ -3,12 +3,11 @@ package com.demo.feature_market.data.remote.dto
 import com.google.gson.annotations.SerializedName
 
 data class WebSocketResponseDto(
-    @SerializedName("topic") val topic: String,
-    @SerializedName("data") val data: List<CoinIndexDataDto>
+    @SerializedName("data") val data: Map<String, CoinIndexDataDto> = emptyMap()
 )
 
 data class CoinIndexDataDto(
-    @SerializedName("symbol") val symbol: String,
+    @SerializedName("id") val id: String,
     @SerializedName("price") val price: Double,
     @SerializedName("type") val type: Int
 )

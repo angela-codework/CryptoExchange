@@ -3,7 +3,7 @@ package com.demo.logger
 object AppLogger {
 
     var enabled = true
-    var minLevel = Level.INFO
+    var minLevel = Level.DEBUG
 
     private const val DEFAULT_TAG = "CryptoExchange"
 
@@ -30,15 +30,15 @@ object AppLogger {
     }
 
     fun i(tag: String? = null, message: String) {
-        printLog(Level.DEBUG, tag, message) { t, m -> impl.i(t, m) }
+        printLog(Level.INFO, tag, message) { t, m -> impl.i(t, m) }
     }
 
     fun w(tag: String? = null, message: String) {
-        printLog(Level.DEBUG, tag, message) { t, m -> impl.w(t, m) }
+        printLog(Level.WARN, tag, message) { t, m -> impl.w(t, m) }
     }
 
     fun e(tag: String? = null, message: String) {
-        printLog(Level.DEBUG, tag, message) { t, m -> impl.e(t, m) }
+        printLog(Level.ERROR, tag, message) { t, m -> impl.e(t, m) }
     }
 
     private fun Level.canShow() : Boolean {

@@ -8,14 +8,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class GetMarketsWithPriceByTypeUseCase @Inject constructor(
+class GetMarketsWithPriceUseCase @Inject constructor(
     private val marketRepository: MarketRepository
 ) {
-    operator fun invoke(type: MarketType) : Flow<List<Market>> {
-        return when(type) {
-            MarketType.SPOT -> marketRepository.getSpotMarketsWithRealTimePrice()
-            MarketType.FUTURE -> marketRepository.getFutureMarketsWithRealTimePrice()
-        }
+    operator fun invoke() : Flow<List<Market>> {
+        return marketRepository.getMarketsWithRealTimePrice()
     }
 }
 

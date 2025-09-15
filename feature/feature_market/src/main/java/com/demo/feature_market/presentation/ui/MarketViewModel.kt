@@ -42,10 +42,11 @@ import com.demo.feature_market.domain.model.Market
 import com.demo.feature_market.domain.model.MarketType
 import com.demo.feature_market.domain.model.MarketUiState
 import com.demo.feature_market.domain.usecase.CloseWebSocketUseCase
-import com.demo.feature_market.domain.usecase.GetMarketsByTypeUseCase
-import com.demo.feature_market.domain.usecase.GetMarketsWithPriceByTypeUseCase
+import com.demo.feature_market.domain.usecase.GetMarketsUseCase
+import com.demo.feature_market.domain.usecase.GetMarketsWithPriceUseCase
 import com.demo.feature_market.domain.usecase.GetWebSocketConnectStateUseCase
 import com.demo.feature_market.domain.usecase.OpenWebSocketUseCase
+import com.demo.logger.AppLogger
 import com.demo.logger.AppLogger.tag
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -68,11 +69,11 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class MarketViewModel @Inject constructor(
-    private val getMarketsWithPriceByTypeUseCase: GetMarketsWithPriceByTypeUseCase,
+    private val getMarketsWithPriceUseCase: GetMarketsWithPriceUseCase,
     private val openWebSocketUseCase: OpenWebSocketUseCase,
     private val closeWebSocketUseCase: CloseWebSocketUseCase,
     private val getWebSocketConnectStateUseCase: GetWebSocketConnectStateUseCase,
-    private val getMarketsByTypeUseCase: GetMarketsByTypeUseCase
+    private val getMarketsUseCase: GetMarketsUseCase
 ) : ViewModel() {
 
     companion object {
@@ -149,17 +150,18 @@ class MarketViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun createMarketsUiFlow() : Flow<MarketUiState> {
         return actionTrigger.flatMapLatest { marketType ->
+            AppLogger.d(TAG, "actionTrigger with type: $marketType ")
             flow {
                 emit(MarketUiState(isLoading = true))
 
-                when(val result = getMarketsByTypeUseCase(marketType)) {
+                when(val result = getMarketsUseCase()) {
                     is Resource.Success<List<Market>> -> {
-                        getMarketsWithPriceByTypeUseCase(marketType).collect { markets ->
-                            emit(MarketUiState(isLoading = false, markets = markets))
+                        getMarketsWithPriceUseCase().collect { markets ->
+                            emit(MarketUiState(marketType = marketType, isLoading = false, markets = markets))
                         }
                     }
                     is Resource.Fail<*> -> {
-                        emit(MarketUiState(isLoading = false, error = result.msg))
+                        emit(MarketUiState(marketType = marketType, isLoading = false, error = result.msg))
                     }
                 }
             }
