@@ -5,8 +5,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.demo.cryptoexchange.presentation.navigation.constants.NavigationRoutes
 import com.demo.cryptoexchange.presentation.navigation.components.PlaceholderScreen
+import com.demo.cryptoexchange.presentation.navigation.constants.ScreenRoute
 import com.demo.feature_market.presentation.ui.MarketScreen
 import com.demo.feature_market.presentation.ui.MarketSpotScreenPreview
 
@@ -18,11 +18,11 @@ fun AppNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = NavigationRoutes.A.name,
+        startDestination = ScreenRoute.Market.name,
         modifier = modifier
     ) {
         // Market Screen
-        composable(NavigationRoutes.A.name) {
+        composable(ScreenRoute.Market.name) {
             if (isPreview) {
                 MarketSpotScreenPreview()
             } else {
@@ -31,18 +31,18 @@ fun AppNavHost(
         }
 
         // Portfolio Screen
-        composable(NavigationRoutes.B.name) {
-            PlaceholderScreen(NavigationRoutes.B.label)
+        composable(ScreenRoute.B.name) {
+            PlaceholderScreen(ScreenRoute.B.label)
         }
 
         // Trade Screen
-        composable(NavigationRoutes.C.name) {
-            PlaceholderScreen(NavigationRoutes.C.label)
+        composable(ScreenRoute.C.name) {
+            PlaceholderScreen(ScreenRoute.C.label)
         }
 
         // Profile Screen
-        composable(NavigationRoutes.D.name) {
-            PlaceholderScreen(NavigationRoutes.D.label)
+        composable(ScreenRoute.D.name) {
+            PlaceholderScreen(ScreenRoute.D.label)
         }
     }
 }

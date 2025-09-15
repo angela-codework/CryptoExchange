@@ -4,9 +4,9 @@ import com.demo.cryptoexchange.presentation.navigation.model.BottomNavItem
 
 object BottomNavBarItems {
     val items = listOf(
-        BottomNavItem(NavigationRoutes.A.name, NavigationRoutes.A.label),
-        BottomNavItem(NavigationRoutes.B.name, NavigationRoutes.B.label),
-        BottomNavItem(NavigationRoutes.C.name,  NavigationRoutes.C.label),
-        BottomNavItem(NavigationRoutes.D.name, NavigationRoutes.D.label)
+        BottomNavItem(ScreenRoute.Market.name, ScreenRoute.Market.label),
+        BottomNavItem(ScreenRoute.B.name, ScreenRoute.B.label),
+        BottomNavItem(ScreenRoute.C.name,  ScreenRoute.C.label),
+        BottomNavItem(ScreenRoute.D.name, ScreenRoute.D.label)
     )
 }
