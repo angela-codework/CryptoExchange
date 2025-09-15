@@ -11,7 +11,6 @@ import java.util.concurrent.TimeUnit
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import com.demo.core.BuildConfig
-import javax.inject.Named
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -37,7 +36,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    @Named(Qualifiers.API_CLIENT_REST)
+    @RestClient
     fun provideRestOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
@@ -49,7 +48,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    @Named(Qualifiers.API_CLIENT_WS)
+    @WsClient
     fun provideWebSocketOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)

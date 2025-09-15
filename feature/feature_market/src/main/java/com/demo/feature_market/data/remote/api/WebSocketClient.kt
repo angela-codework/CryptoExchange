@@ -1,6 +1,6 @@
 package com.demo.feature_market.data.remote.api
 
-import com.demo.core.di.Qualifiers
+import com.demo.core.di.WsClient
 import com.demo.core.util.fromJsonOrNull
 import com.demo.core.util.toJsonOrNull
 import com.demo.feature_market.core.common.Constants.BASE_WS_URL
@@ -30,7 +30,7 @@ import javax.inject.Singleton
 
 @Singleton
 class WebSocketClient @Inject constructor(
-    @property:Named(Qualifiers.API_CLIENT_WS) private val client: OkHttpClient,
+    @WsClient private val client: OkHttpClient,
     private val gson: Gson
 ) {
 
