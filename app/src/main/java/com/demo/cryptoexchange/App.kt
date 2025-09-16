@@ -9,6 +9,6 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        AppLogger.enabled = BuildConfig.DEBUG
+        AppLogger.enabled = true
     }
 }
