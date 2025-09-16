@@ -162,7 +162,7 @@ class MarketViewModel @Inject constructor(
         }
     }
 
-    override fun onCleared() {
+    public override fun onCleared() {
         super.onCleared()
         closeWebSocketUseCase()
     }
