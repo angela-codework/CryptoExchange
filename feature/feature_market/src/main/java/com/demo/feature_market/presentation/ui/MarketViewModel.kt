@@ -200,7 +200,7 @@ class MarketViewModel @Inject constructor(
         }
     }
 
-    override fun onCleared() {
+    public override fun onCleared() {
         super.onCleared()
         // Clean up resources when the ViewModel is destroyed.
         closeWebSocketUseCase()
