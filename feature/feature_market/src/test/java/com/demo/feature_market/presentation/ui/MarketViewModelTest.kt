@@ -88,7 +88,7 @@ class MarketViewModelTest {
 
         viewModel.syncMarkets()
 
-        val error = viewModel.errorEvent.first()
+        val error = viewModel.errorMsg.first()
         assertEquals(errorMessage, error)
     }
 
