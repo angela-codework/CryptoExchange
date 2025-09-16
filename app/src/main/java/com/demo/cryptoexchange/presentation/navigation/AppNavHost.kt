@@ -6,23 +6,25 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.demo.cryptoexchange.presentation.navigation.components.PlaceholderScreen
-import com.demo.cryptoexchange.presentation.navigation.constants.ScreenRoute
+import com.demo.cryptoexchange.presentation.navigation.model.RouteScreen
+import com.demo.cryptoexchange.presentation.navigation.screens.DScreen
+import com.demo.cryptoexchange.presentation.navigation.screens.SettingScreen
 import com.demo.feature_market.presentation.ui.MarketScreen
 import com.demo.feature_market.presentation.ui.MarketSpotScreenPreview
 
 @Composable
 fun AppNavHost(
+    modifier: Modifier = Modifier,
     navController: NavHostController,
-    isPreview: Boolean = false,
-    modifier: Modifier = Modifier
+    isPreview: Boolean = false
 ) {
     NavHost(
         navController = navController,
-        startDestination = ScreenRoute.Market.name,
+        startDestination = RouteScreen.Market.route,
         modifier = modifier
     ) {
         // Market Screen
-        composable(ScreenRoute.Market.name) {
+        composable(RouteScreen.Market.route) {
             if (isPreview) {
                 MarketSpotScreenPreview()
             } else {
@@ -30,19 +32,27 @@ fun AppNavHost(
             }
         }
 
-        // Portfolio Screen
-        composable(ScreenRoute.B.name) {
-            PlaceholderScreen(ScreenRoute.B.label)
+        // B Screen
+        composable(RouteScreen.B.route) {
+            PlaceholderScreen(RouteScreen.B.title)
         }
 
-        // Trade Screen
-        composable(ScreenRoute.C.name) {
-            PlaceholderScreen(ScreenRoute.C.label)
+        // C Screen
+        composable(RouteScreen.C.route) {
+            PlaceholderScreen(RouteScreen.C.title)
         }
 
-        // Profile Screen
-        composable(ScreenRoute.D.name) {
-            PlaceholderScreen(ScreenRoute.D.label)
+        // D Screen
+        composable(RouteScreen.D.route) {
+            DScreen(
+                screenName = RouteScreen.D.title,
+                onSettingClick = { navController.navigate(RouteScreen.Setting.route) },
+            )
+        }
+
+        // Settings Screen
+        composable(RouteScreen.Setting.route) {
+            SettingScreen(onBackClick = { navController.popBackStack() })
         }
     }
 }
