@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.Surface
 import com.demo.core.common.ui.components.CryptoExchangeTheme
-import com.demo.cryptoexchange.presentation.navigation.MainScreen
+import com.demo.cryptoexchange.presentation.navigation.MainNavigation
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             CryptoExchangeTheme(darkTheme = true) {
                 Surface {
-                    MainScreen()
+                    MainNavigation()
                 }
             }
         }

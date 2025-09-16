@@ -11,7 +11,7 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.demo.cryptoexchange.presentation.navigation.model.RouteScreen
+import com.demo.cryptoexchange.presentation.navigation.model.BottomBarRoute
 import com.demo.cryptoexchange.presentation.navigation.theme.AppNavigationItemColors
 
 @Composable
@@ -23,7 +23,7 @@ fun AppBottomNavigationBar(
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
 
-        RouteScreen.getBottomNavItems().forEach { item ->
+        BottomBarRoute.getBottomNavItems().forEach { item ->
             NavigationBarItem(
                 modifier = modifier,
                 icon = {},
